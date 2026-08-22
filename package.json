@@ -1,0 +1,40 @@
+{
+  "name": "arbiterqa",
+  "version": "0.3.0",
+  "description": "ArbiterQA — agent-native QA for emails and webpages. Installs the ArbiterQA skill (and Cursor MCP entry) and logs you in. Remote MCP: https://api.arbiterqa.com/mcp",
+  "keywords": [
+    "qa",
+    "validation",
+    "email",
+    "webpage",
+    "ai",
+    "agent",
+    "skills",
+    "testing",
+    "mcp",
+    "model-context-protocol"
+  ],
+  "homepage": "https://www.arbiterqa.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rbtr-qa/arbiterqa.git"
+  },
+  "author": "rbtr.qa",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=18.17.0"
+  },
+  "bin": {
+    "arbiterqa": "bin/arbiterqa.mjs",
+    "arbiter": "bin/arbiterqa.mjs"
+  },
+  "files": [
+    "bin/",
+    "skills/",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test tests/"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "arbiterqa",
+  "displayName": "ArbiterQA",
+  "version": "1.0.0",
+  "description": "QA webpages and emails with ArbiterQA — MCP tools plus agent skill.",
+  "author": {
+    "name": "ArbiterQA",
+    "url": "https://www.arbiterqa.com"
+  },
+  "homepage": "https://api.arbiterqa.com/llms.txt",
+  "keywords": ["qa", "email", "webpage", "mcp", "validation"],
+  "userConfig": {
+    "api_key": {
+      "type": "string",
+      "title": "ArbiterQA API key",
+      "description": "From npx arbiterqa login / print-key, or Dashboard → API & agents.",
+      "sensitive": true,
+      "required": true
+    }
+  }
+}
