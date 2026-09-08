@@ -1,6 +1,9 @@
 {
-  "name": "arbiterqa",
+  "name": "@rbtrqa/cli",
   "version": "0.3.0",
+  "publishConfig": {
+    "access": "public"
+  },
   "description": "ArbiterQA — agent-native QA for emails and webpages. Installs the ArbiterQA skill (and Cursor MCP entry) and logs you in. Remote MCP: https://api.arbiterqa.com/mcp",
   "keywords": [
     "qa",

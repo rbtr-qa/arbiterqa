@@ -1,15 +1,15 @@
 # ArbiterQA distribution (`rbtr-qa/arbiterqa`)
 
-Public home for the **`npx arbiterqa`** CLI, agent skill, and Claude Code plugin.
+Public home for the **`npx @rbtrqa/cli`** CLI, agent skill, and Claude Code plugin.
 Canonical skill prose is authored in the private app repo (`skills/arbiterqa/`) and
 projected here via `bun run skills:project` in `lksy-private`.
 
-## npm — `npx arbiterqa`
+## npm — `npx @rbtrqa/cli`
 
 ```sh
-npx arbiterqa install
-npx arbiterqa login
-npx arbiterqa print-key
+npx @rbtrqa/cli install
+npx @rbtrqa/cli login
+npx @rbtrqa/cli print-key
 ```
 
 See [README.npm.md](./README.npm.md) for the full customer README shipped on npm.
@@ -23,7 +23,7 @@ After this repo is public on GitHub:
 /plugin install arbiterqa@rbtr-plugins
 ```
 
-Paste an API key from `npx arbiterqa login` / `print-key` when Claude prompts
+Paste an API key from `npx @rbtrqa/cli login` / `print-key` when Claude prompts
 `userConfig`.
 
 Local validation:
@@ -37,7 +37,7 @@ claude plugin validate ./plugins/arbiterqa
 
 | Path | Purpose |
 | --- | --- |
-| `bin/`, `skills/`, `package.json` | npm package (`arbiterqa@0.3.0`) |
+| `bin/`, `skills/`, `package.json` | npm package (`@rbtrqa/cli@0.3.0`) |
 | `plugins/arbiterqa/` | Claude Code plugin + remote MCP binding |
 | `plugins/.claude-plugin/marketplace.json` | Marketplace catalog (`rbtr-plugins`) |
 

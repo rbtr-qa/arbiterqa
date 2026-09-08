@@ -11,7 +11,7 @@ webpage, runs opinionated visual and functional validations, and gets back
 From your project root:
 
 ```sh
-npx arbiterqa install
+npx @rbtrqa/cli install
 ```
 
 This detects your coding agent (Claude Code, Cursor, Codex CLI, Gemini CLI —
@@ -23,7 +23,7 @@ finds Cursor, it also writes a remote **MCP** entry into `.cursor/mcp.json`
 Then log in (creates your account on first run):
 
 ```sh
-npx arbiterqa login
+npx @rbtrqa/cli login
 ```
 
 That's it. Ask your agent things like *"run ArbiterQA on this landing page
@@ -40,7 +40,7 @@ https://api.arbiterqa.com/mcp
 
 Streamable HTTP. Discovery tools (`search_validations`, `get_validation`,
 `recommend_checks`, `list_validations`, …) need **no key**. Estimate, run,
-account, and feedback tools need a Bearer API key from `npx arbiterqa login`.
+account, and feedback tools need a Bearer API key from `npx @rbtrqa/cli login`.
 
 Protected-resource metadata (RFC 9728):
 
@@ -50,8 +50,8 @@ https://api.arbiterqa.com/.well-known/oauth-protected-resource/mcp
 
 ### Cursor / MCP host config
 
-`npx arbiterqa install` writes this when `.cursor/` is present. You can also
-paste it yourself (set `ARBITER_API_KEY` from `npx arbiterqa print-key`):
+`npx @rbtrqa/cli install` writes this when `.cursor/` is present. You can also
+paste it yourself (set `ARBITER_API_KEY` from `npx @rbtrqa/cli print-key`):
 
 ```json
 {
@@ -73,12 +73,12 @@ it does not.
 
 | Command | What it does |
 | --- | --- |
-| `npx arbiterqa install` | Install the skill (and Cursor MCP entry) into detected agent harnesses |
-| `npx arbiterqa update` | Refresh a previous install to the latest skill / MCP config |
-| `npx arbiterqa login` | Browser device-flow login; stores an API key in `~/.config/arbiter/hosts.json` (chmod 600) |
-| `npx arbiterqa status` | Show who is logged in, on which API host |
-| `npx arbiterqa print-key` | Print the stored API key (for scripts/CI) |
-| `npx arbiterqa logout` | Forget the local credential and revoke the key (says so plainly if revocation needs the dashboard) |
+| `npx @rbtrqa/cli install` | Install the skill (and Cursor MCP entry) into detected agent harnesses |
+| `npx @rbtrqa/cli update` | Refresh a previous install to the latest skill / MCP config |
+| `npx @rbtrqa/cli login` | Browser device-flow login; stores an API key in `~/.config/arbiter/hosts.json` (chmod 600) |
+| `npx @rbtrqa/cli status` | Show who is logged in, on which API host |
+| `npx @rbtrqa/cli print-key` | Print the stored API key (for scripts/CI) |
+| `npx @rbtrqa/cli logout` | Forget the local credential and revoke the key (says so plainly if revocation needs the dashboard) |
 
 Options: `--api <url>` / `ARBITER_API_URL` to target a different host,
 `--name <key name>` on login.

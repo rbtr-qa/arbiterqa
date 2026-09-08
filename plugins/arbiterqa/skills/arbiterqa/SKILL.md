@@ -16,8 +16,8 @@ unavailable.
 ## Authentication
 
 ```sh
-npx arbiterqa login        # browser sign-in; creates account if needed
-npx arbiterqa print-key    # emit the stored API key
+npx @rbtrqa/cli login        # browser sign-in; creates account if needed
+npx @rbtrqa/cli print-key    # emit the stored API key
 ```
 
 **No browser available?** Sign yourself up: MCP `create_account` (public), or
@@ -43,7 +43,7 @@ Protected-resource metadata:
 | Tool | Auth | Use for |
 | --- | --- | --- |
 | `search_validations`, `list_validations`, `get_validation` | no | Discover checks |
-| `recommend_checks`, `compare_checks`, `list_validation_standards` | no | Choose a set |
+| `recommend_checks`, `compare_checks`, `list_validation_sets` | no | Choose a set |
 | `describe_job_request`, `check_job_request`, `explain_error` | no | Shape / debug requests |
 | `create_account` | no | Get a key with no browser (shown once) |
 | `estimate_job`, `run_job`, `get_job`, `await_email_job` | Bearer | Quote and execute |
@@ -66,7 +66,7 @@ repair brief — agents act on those structured fields only.
 
 ## Typical flow
 
-1. Discover: `search_validations` / `recommend_checks` (or `list_validation_standards` for email).
+1. Discover: `search_validations` / `recommend_checks` (or `list_validation_sets` for email).
 2. `estimate_job` with the same body you will run.
 3. `run_job`. For email, tell the user the `testEmail` and await completion.
 4. Summarize from `results` / `validationSets`; cite fail `references` when present.

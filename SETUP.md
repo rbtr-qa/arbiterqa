@@ -1,4 +1,4 @@
-# Setup: `rbtr-qa` GitHub org + npm ownership
+# Setup: `rbtr-qa` GitHub org + `@rbtrqa/cli` on npm
 
 ## 1. Create GitHub org (human, one time)
 
@@ -23,15 +23,31 @@ git remote add origin git@github.com:rbtr-qa/arbiterqa.git
 git push -u origin main
 ```
 
-## 3. Move npm package off Michael's account (no publish from Michael)
+## 3. Publish `@rbtrqa/cli` on npm org **`rbtrqa`**
 
-Goal: keep the unscoped name **`arbiterqa`** so `npx arbiterqa` stays unchanged.
+Customer install command: **`npx @rbtrqa/cli`**. Bin names inside the package stay `arbiterqa` / `arbiter`.
 
-1. Create an **ArbiterQA npm organization** (or use a maintainer org you control — not `@rbtr`, that scope is taken by another project)
-2. Michael invites ArbiterQA maintainers as **`arbiterqa` package owners** (or grants org team read/write)
-3. Michael removes himself after maintainers accept
-4. Configure **trusted publishing** on npm for `arbiterqa` → GitHub repo `rbtr-qa/arbiterqa`, workflow `release.yml`
-5. First publish **0.3.0** from GitHub Actions (OIDC), not from a personal laptop token
+1. Log in to npm with access to org **`rbtrqa`**: `npm login`
+2. **First publish (manual once)** — trusted publishing requires an existing package:
+
+   ```sh
+   cd docs/handoffs/rbtr-qa-arbiterqa   # or clone github.com/rbtr-qa/arbiterqa
+   npm publish --access public
+   ```
+
+3. Configure **trusted publishing** on npmjs.com → **`@rbtrqa/cli`** → Settings → Trusted publishing:
+
+   | Field | Value |
+   | --- | --- |
+   | Provider | GitHub Actions |
+   | Repository | `rbtr-qa/arbiterqa` |
+   | Workflow | `release.yml` |
+
+4. Future releases: tag `v0.3.1` (etc.) → Actions publishes via OIDC (no long-lived npm token)
+
+### Optional legacy track — unscoped `arbiterqa`
+
+Michael's unscoped **`arbiterqa@0.2.0`** is not under our control. To recover `npx arbiterqa` later, file npm support → **Dispute a package, org, or username** and request org **`rbtrqa`** be added as owners. Not blocking ship.
 
 ## 4. After first npm publish
 
@@ -51,3 +67,4 @@ That clears `npm_package` blocked and stamps Cursor/Codex/Gemini/`AGENTS.md` fol
 | `rbtr` (GitHub) | Personal user (unrelated) |
 | `rbtr.qa` (GitHub org) | Dots not allowed |
 | `@rbtr` (npm) | Existing third-party org |
+| unscoped `arbiterqa` (npm) | Michael's account — use `@rbtrqa/cli` instead |

@@ -3,7 +3,7 @@
 Use this when MCP is unavailable. Prefer MCP tools when the host supports them.
 
 **Base URL:** `https://api.arbiterqa.com`  
-**Auth:** `Authorization: Bearer <key>` from `npx arbiterqa login` / `print-key`  
+**Auth:** `Authorization: Bearer <key>` from `npx @rbtrqa/cli login` / `print-key`  
 **Dashboard:** `https://app.arbiterqa.com`
 
 ## Discover
@@ -16,7 +16,7 @@ Public. Use only ids with `runnable: true`. Respect `requiresConfiguration` /
 `subjectType`. Catalog dump with parameters: `GET /api/validations?include=parameters`.
 
 ```
-GET /api/validation-standards
+GET /api/validation-sets
 ```
 
 Public curated email standards (category + tier).
@@ -162,7 +162,7 @@ the MCP tool `explain_error` called with no arguments. Do not guess codes.
 | `VALIDATION_NOT_RUNNABLE` | 400 | Use an id from GET /api/validations where runnable is true. An id we run but do not list is refused too, so that it can never run unpriced. |
 | `VALIDATION_STANDARD_CONFLICT` | 400 | A tier cannot be combined with a hand-built validationSets list — the explicit sets already decide membership and severities, and silently replacing them would rewrite the request. A tier beside explicit validation ids is fine: membership is the union (this is what the unified wire shape normalizes to). Sending category alongside an explicit list is also allowed; it records which standard the list came from. |
 | `VALIDATION_STANDARD_NOT_APPLICABLE` | 400 | standards[] applies to email jobs only; url and static_html jobs select validations directly. Remove standards or set type to email. details.path names the offending location. |
-| `VALIDATION_STANDARD_NOT_PUBLISHED` | 400 | Call GET /api/validation-standards for the published category and tier pairs, or name the checks yourself in the request’s validations array. |
+| `VALIDATION_STANDARD_NOT_PUBLISHED` | 400 | Call GET /api/validation-sets for the published category and tier pairs, or name the checks yourself in the request’s validations array. |
 | `VALIDATION_SUBJECT_MISMATCH` | 400 | Every named validation must match the job type: url/static_html jobs take url-subject checks, email jobs take email-subject checks. details.mismatches names each offender with its subject type. Pick ids from GET /api/validations whose subjectType matches your job. |
 | `VALIDATION_TYPE_UNSUPPORTED` | 400 | Use a supported validation type, such as url or static_html. |
 | `AUTH_REQUIRED` | 401 | Sign in and retry the request with a valid session. |
@@ -183,7 +183,7 @@ the MCP tool `explain_error` called with no arguments. Do not guess codes.
 | `PLAYGROUND_RUN_NOT_FOUND` | 404 | Unknown or expired playground run id. Runs are kept in memory for a limited time (PLAYGROUND_RUN_TTL_MINUTES). |
 | `STORAGE_OBJECT_NOT_FOUND` | 404 | Check customerId, jobId, and storage key. Legacy jobs may use _screenshot. |
 | `VALIDATION_NOT_FOUND` | 404 | Use GET /api/validations for offered ids, or a published content slug from /validations/:slug/standard. |
-| `ACCOUNT_EXISTS` | 409 | A tenant already exists for this email address. POST /api/signup only provisions NEW accounts and never returns a credential for an existing one. Sign in at /auth/login and use POST /api/keys, or `npx arbiterqa login` for a CLI key. |
+| `ACCOUNT_EXISTS` | 409 | A tenant already exists for this email address. POST /api/signup only provisions NEW accounts and never returns a credential for an existing one. Sign in at /auth/login and use POST /api/keys, or `npx @rbtrqa/cli login` for a CLI key. |
 | `FEEDBACK_ALREADY_GIVEN` | 409 | This user already completed this set (or already filed this looks-wrong set for this job and check). Feedback is append-only: the original submission stands and was paid at most once. There is nothing to retry. |
 | `FEEDBACK_NOT_DUE` | 409 | The set is not currently due for this credential. Job-scope sets are served one at a time by GET /api/feedback/questions — submit the set that endpoint returns. For validation scope, the set must match the result row's verdict (details.expectedSetId when known). |
 | `JOB_CHARGE_CONFLICT` | 409 | A credit_ledger charge already exists for this job id under a different tenant or a different amount. Job ids are minted server-side and are not accepted in the request body, so this should be unreachable — treat it as an invariant violation and check the logs for billing.charge_conflict. Nothing was charged and no job was created. |
@@ -194,7 +194,7 @@ the MCP tool `explain_error` called with no arguments. Do not guess codes.
 | `BILLING_NOT_PROVISIONED` | 503 | The customer row has no Kinde billing customer, or its billing customer holds no live agreement. Signup provisions both, so this org predates billing or was provisioned outside it. Repair by reprovisioning the org (scripts/reprovision-kinde-orgs.ts); no default plan is substituted. |
 | `BILLING_PROVIDER_UNREACHABLE` | 503 | The Kinde Management API or the synced plan catalog could not be read. No plan data is assumed during the outage — every request needing the plan fails until Kinde answers. Check Kinde status, credentials, and network egress; a cached resolution (≤5 min) is still served where one exists. |
 | `EMAIL_CLIENT_CATALOG_UNAVAILABLE` | 503 | The rbtr client catalog is unreachable and nothing is cached, so client ids in clients cannot be validated. Refusing beats skipping: an unvetted id would fail at capture time, after the charge. Retry, or resubmit without per-validation clients. Nothing was charged and no job was created. |
-| `PLAN_NOT_PUBLISHED` | 503 | The customer's plan code has no plan_catalog row: the plan exists in Kinde but plan.published never reached this environment. Republish the plan in the Kinde dashboard (or run the admin plan-sync) so the catalog holds its definition; requests needing the plan fail until it does. |
+| `PLAN_NOT_PUBLISHED` | 503 | The customer's Kinde agreement is missing a usable credits entitlement (absent, ≤0, or the 2147483647 unlimited sentinel on a paid plan) or the plan code is not one we grant for. Fix the plan's credits meter in the Kinde dashboard; Free ignores that field and uses FREE_MONTHLY_CREDITS. Requests needing the plan fail until the entitlement is set. |
 | `SERVICE_UNAVAILABLE` | 503 | A dependency this endpoint requires is unconfigured or unreachable, so the request was refused before any work or billing. This is our deployment, not your request: the body is unchanged and retrying is safe. Call sites override this message with the specific dependency; the request log carries it either way. |
 
 <!-- END GENERATED: error-codes -->

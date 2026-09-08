@@ -22,5 +22,5 @@ jobs:
         run: npm install -g npm@11
       - name: Publish to npm (OIDC trusted publishing)
         run: npm publish --access public
-        # Configure trusted publishing on npmjs.com for package arbiterqa → this repo + release.yml.
+        # Configure trusted publishing on npmjs.com for @rbtrqa/cli → this repo + release.yml.
         # No long-lived NPM_TOKEN when OIDC is wired.
