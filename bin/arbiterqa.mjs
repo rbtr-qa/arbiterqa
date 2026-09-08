@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 /**
- * npx arbiterqa — install the ArbiterQA skill into your coding agent, and sign in to get
+ * npx @rbtrqa/cli — install the ArbiterQA skill into your coding agent, and sign in to get
  * an API key.
  *
- *   npx arbiterqa install      Install the skill into detected agent harnesses
- *   npx arbiterqa update       Re-install from the latest published skill
- *   npx arbiterqa login        Browser sign-in; stores an API key locally
- *   npx arbiterqa status       Who am I
- *   npx arbiterqa print-key    Emit the stored API key (composable)
- *   npx arbiterqa logout       Revoke the key and forget it
- *   npx arbiterqa help         This text
+ *   npx @rbtrqa/cli install      Install the skill into detected agent harnesses
+ *   npx @rbtrqa/cli update       Re-install from the latest published skill
+ *   npx @rbtrqa/cli login        Browser sign-in; stores an API key locally
+ *   npx @rbtrqa/cli status       Who am I
+ *   npx @rbtrqa/cli print-key    Emit the stored API key (composable)
+ *   npx @rbtrqa/cli logout       Revoke the key and forget it
+ *   npx @rbtrqa/cli help         This text
  *
  * NO FLAGS, deliberately. Every command does one thing against production. A login
  * command with options is a login command you have to read the manual for, and the whole
@@ -433,7 +433,7 @@ function installCursorMcpEntry(cwd) {
   mkdirSync(cursorDir, { recursive: true });
   writeFileSync(mcpPath, `${JSON.stringify(doc, null, 2)}\n`);
   console.error(`✓ Cursor MCP: .cursor/mcp.json → ${mcpEndpointUrl()}`);
-  console.error('  Set ARBITER_API_KEY (npx arbiterqa print-key) or paste the key into the header.');
+  console.error('  Set ARBITER_API_KEY (npx @rbtrqa/cli print-key) or paste the key into the header.');
   return true;
 }
 
@@ -480,7 +480,7 @@ function installSkill({ update = false } = {}) {
     process.exit(1);
   }
 
-  console.error(`\n${update ? 'Updated' : 'Installed'}. Next: npx arbiterqa login`);
+  console.error(`\n${update ? 'Updated' : 'Installed'}. Next: npx @rbtrqa/cli login`);
 }
 
 // ── command dispatch ─────────────────────────────────────────────────────────
@@ -488,12 +488,12 @@ if (COMMAND === 'help' || COMMAND === '--help' || COMMAND === '-h') {
   console.error(`ArbiterQA — agent-native QA for emails and webpages
 https://www.arbiterqa.com · MCP https://api.arbiterqa.com/mcp
 
-  npx arbiterqa install      Install the ArbiterQA skill (+ Cursor MCP entry) into this project
-  npx arbiterqa update       Refresh a previous install
-  npx arbiterqa login        Sign in and store an API key on this machine
-  npx arbiterqa status       Show who you are signed in as
-  npx arbiterqa print-key    Print the stored API key to stdout
-  npx arbiterqa logout       Revoke the key and forget it
+  npx @rbtrqa/cli install      Install the ArbiterQA skill (+ Cursor MCP entry) into this project
+  npx @rbtrqa/cli update       Refresh a previous install
+  npx @rbtrqa/cli login        Sign in and store an API key on this machine
+  npx @rbtrqa/cli status       Show who you are signed in as
+  npx @rbtrqa/cli print-key    Print the stored API key to stdout
+  npx @rbtrqa/cli logout       Revoke the key and forget it
 
 login writes ARBITER_API_KEY into ./.env and gitignores it. To change that:
   ARBITER_ENV_FILE=path/to/.env    write it somewhere else
@@ -518,7 +518,7 @@ if (COMMAND === 'status') {
     process.exit(0);
   }
   const cred = readHosts()[API_BASE];
-  if (!cred) fail('Not signed in. Run: npx arbiterqa login');
+  if (!cred) fail('Not signed in. Run: npx @rbtrqa/cli login');
   console.error(`✓ Signed in as ${cred.email}`);
   if (cred.orgCode) console.error(`  Organization ${cred.orgCode}`);
   console.error(`  Key "${cred.keyName}" (…${String(cred.keyId).slice(-8)}), stored ${cred.createdAt}`);
@@ -533,7 +533,7 @@ if (COMMAND === 'print-key') {
     process.exit(0);
   }
   const cred = readHosts()[API_BASE];
-  if (!cred) fail('Not signed in. Run: npx arbiterqa login');
+  if (!cred) fail('Not signed in. Run: npx @rbtrqa/cli login');
   console.log(cred.apiKey);
   process.exit(0);
 }
@@ -583,7 +583,7 @@ if (COMMAND === 'logout') {
   process.exit(revoked ? 0 : 1);
 }
 
-if (COMMAND !== 'login') fail(`Unknown command: ${COMMAND} (try: npx arbiterqa help)`);
+if (COMMAND !== 'login') fail(`Unknown command: ${COMMAND} (try: npx @rbtrqa/cli help)`);
 
 // ── login ────────────────────────────────────────────────────────────────────
 // Loopback authorization-code + PKCE (RFC 8252 / RFC 7636) — the `gcloud auth login`
@@ -885,5 +885,5 @@ if (!envPath) {
 // The outcome first — that is the sentence the reader came for — then the two commands
 // they will actually reach for next.
 console.error(`\n  Your agent can use it now.`);
-console.error(`\n  Scripts can read it with:  npx arbiterqa print-key`);
-console.error(`  Check anytime with:        npx arbiterqa status\n`);
+console.error(`\n  Scripts can read it with:  npx @rbtrqa/cli print-key`);
+console.error(`  Check anytime with:        npx @rbtrqa/cli status\n`);
