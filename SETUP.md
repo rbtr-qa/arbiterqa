@@ -1,70 +1,53 @@
-# Setup: `rbtr-qa` GitHub org + `@rbtrqa/cli` on npm
+# Setup: `rbtr-qa` GitHub + `@rbtrqa/cli` on npm org **`rbtrqa`**
 
-## 1. Create GitHub org (human, one time)
+## GitHub (working)
 
-GitHub org slugs cannot contain dots — use **`rbtr-qa`**. Display name can be **rbtr.qa**.
-
-1. Open https://github.com/organizations/plan
-2. Create organization **`rbtr-qa`** (Free plan is fine to start)
-3. Require 2FA for all members; create a **`release`** team with repo + Actions access
-4. Add named maintainers (no shared login)
-
-## 2. Create public repository
-
-Create **`rbtr-qa/arbiterqa`** (public), then push this directory as the initial commit:
+`mhhlines` is **admin** on **`rbtr-qa/arbiterqa`**. Sync handoff from this repo:
 
 ```sh
-cd docs/handoffs/rbtr-qa-arbiterqa   # from lksy-private checkout
-git init
-git add .
-git commit -m "feat: initial ArbiterQA CLI + Claude plugin distribution"
-git branch -M main
-git remote add origin git@github.com:rbtr-qa/arbiterqa.git
-git push -u origin main
+./scripts/push-rbtr-qa-arbiterqa-github.sh "feat: @rbtrqa/cli@0.3.0"
 ```
 
-## 3. Publish `@rbtrqa/cli` on npm org **`rbtrqa`**
+Requires `gh auth login` (already configured on maintainer machines).
 
-Customer install command: **`npx @rbtrqa/cli`**. Bin names inside the package stay `arbiterqa` / `arbiter`.
+## npm auth (one-time per machine)
 
-1. Log in to npm with access to org **`rbtrqa`**: `npm login`
-2. **First publish (manual once)** — trusted publishing requires an existing package:
+Pick **one** — not both:
+
+### A. Browser login (recommended for laptops)
+
+```sh
+npm login --auth-type=web
+npm whoami   # must print your npm username
+```
+
+### B. Token in Secret Manager (recommended for agents / CI until trusted publishing)
+
+1. Create a **Granular Access Token** on npmjs.com → org **`rbtrqa`** → Packages → Read and Write → `@rbtrqa/cli`
+2. Store it:
 
    ```sh
-   cd docs/handoffs/rbtr-qa-arbiterqa   # or clone github.com/rbtr-qa/arbiterqa
-   npm publish --access public
+   gcloud secrets create rbtr-local-npm-token --project=project-3d6158cf-00c9-4900-b14 --replication-policy=automatic
+   echo -n 'npm_…' | gcloud secrets versions add rbtr-local-npm-token --data-file=-
    ```
 
-3. Configure **trusted publishing** on npmjs.com → **`@rbtrqa/cli`** → Settings → Trusted publishing:
+3. Add to `.env.example` / `env:sync` as `NPM_TOKEN=<secret:npm-token>` when wired, or export `NPM_TOKEN` locally.
 
-   | Field | Value |
-   | --- | --- |
-   | Provider | GitHub Actions |
-   | Repository | `rbtr-qa/arbiterqa` |
-   | Workflow | `release.yml` |
+## Publish `@rbtrqa/cli@0.3.0`
 
-4. Future releases: tag `v0.3.1` (etc.) → Actions publishes via OIDC (no long-lived npm token)
+```sh
+./scripts/publish-npm-handoff.sh           # dry-run
+./scripts/publish-npm-handoff.sh --publish # ship
+```
 
-### Optional legacy track — unscoped `arbiterqa`
+Then configure **trusted publishing** on npmjs.com → `@rbtrqa/cli` → GitHub Actions → `rbtr-qa/arbiterqa` / `release.yml`.
 
-Michael's unscoped **`arbiterqa@0.2.0`** is not under our control. To recover `npx arbiterqa` later, file npm support → **Dispute a package, org, or username** and request org **`rbtrqa`** be added as owners. Not blocking ship.
-
-## 4. After first npm publish
-
-In `lksy-private` Admin → Skills → **Confirm npm published**, or:
+## After first publish
 
 ```sh
 bun run skills:project -- --confirm-handoff
 ```
 
-That clears `npm_package` blocked and stamps Cursor/Codex/Gemini/`AGENTS.md` followers.
+## Optional later — recover unscoped `npx arbiterqa`
 
-## Slugs we cannot use
-
-| Slug | Why |
-| --- | --- |
-| `arbiterqa` (GitHub) | Personal user since 2018 |
-| `rbtr` (GitHub) | Personal user (unrelated) |
-| `rbtr.qa` (GitHub org) | Dots not allowed |
-| `@rbtr` (npm) | Existing third-party org |
-| unscoped `arbiterqa` (npm) | Michael's account — use `@rbtrqa/cli` instead |
+Michael still owns **`arbiterqa@0.2.0`**. Not blocking `@rbtrqa/cli`. File npm support dispute if you want the old one-liner back.

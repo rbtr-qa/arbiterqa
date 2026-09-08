@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'npm publish --dry-run only'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -20,7 +26,19 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
       - name: Use npm with trusted publishing support
         run: npm install -g npm@11
-      - name: Publish to npm (OIDC trusted publishing)
-        run: npm publish --access public
-        # Configure trusted publishing on npmjs.com for @rbtrqa/cli → this repo + release.yml.
-        # No long-lived NPM_TOKEN when OIDC is wired.
+      - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -n "$NODE_AUTH_TOKEN" ]; then
+            echo "Using NPM_TOKEN repository secret (first publish or fallback)."
+          else
+            echo "No NPM_TOKEN — using OIDC trusted publishing (configure on npmjs.com)."
+          fi
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
+            npm publish --access public --dry-run
+          else
+            npm publish --access public
+          fi
+        # Trusted publishing: npmjs.com → @rbtrqa/cli → GitHub Actions → rbtr-qa/arbiterqa / release.yml
+        # First publish: add repository secret NPM_TOKEN (granular publish token for @rbtrqa), run workflow_dispatch.
