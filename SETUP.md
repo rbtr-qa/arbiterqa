@@ -1,53 +1,39 @@
-# Setup: `rbtr-qa` GitHub + `@rbtrqa/cli` on npm org **`rbtrqa`**
+# Releasing `@rbtrqa/cli`
 
-## GitHub (working)
+Published to npm (org **`rbtrqa`**) from this repo by `.github/workflows/release.yml`,
+using **npm trusted publishing** — GitHub OIDC, no npm token stored anywhere.
 
-`mhhlines` is **admin** on **`rbtr-qa/arbiterqa`**. Sync handoff from this repo:
+## Release
 
-```sh
-./scripts/push-rbtr-qa-arbiterqa-github.sh "feat: @rbtrqa/cli@0.3.0"
-```
+1. In `lksy-private`, project the skill and open the sync PR here:
 
-Requires `gh auth login` (already configured on maintainer machines).
+   ```sh
+   bun run skills:project
+   bun run cli:sync -- --version x.y.z
+   ```
 
-## npm auth (one-time per machine)
+   `bun run cli:sync:check` reports whether this repo's `skills/` and `plugins/` have drifted.
 
-Pick **one** — not both:
+2. Merge the PR.
+3. Tag it — the workflow checks the tag equals `package.json` and publishes:
 
-### A. Browser login (recommended for laptops)
+   ```sh
+   git tag vx.y.z && git push origin vx.y.z
+   ```
+
+4. In `lksy-private`, record the publication: `POST /api/admin/skills/arbiterqa/confirm-npm`.
+
+`workflow_dispatch` with `dry_run` runs `npm publish --dry-run`.
+
+## One-time: trusted publisher
+
+Needs an npm session with web 2FA (tokens cannot create trust):
 
 ```sh
 npm login --auth-type=web
-npm whoami   # must print your npm username
+npm trust github @rbtrqa/cli --file release.yml --repo rbtr-qa/arbiterqa --allow-publish -y
+npm trust list @rbtrqa/cli
 ```
 
-### B. Token in Secret Manager (recommended for agents / CI until trusted publishing)
-
-1. Create a **Granular Access Token** on npmjs.com → org **`rbtrqa`** → Packages → Read and Write → `@rbtrqa/cli`
-2. Store it:
-
-   ```sh
-   gcloud secrets create rbtr-local-npm-token --project=project-3d6158cf-00c9-4900-b14 --replication-policy=automatic
-   echo -n 'npm_…' | gcloud secrets versions add rbtr-local-npm-token --data-file=-
-   ```
-
-3. Add to `.env.example` / `env:sync` as `NPM_TOKEN=<secret:npm-token>` when wired, or export `NPM_TOKEN` locally.
-
-## Publish `@rbtrqa/cli@0.3.0`
-
-```sh
-./scripts/publish-npm-handoff.sh           # dry-run
-./scripts/publish-npm-handoff.sh --publish # ship
-```
-
-Then configure **trusted publishing** on npmjs.com → `@rbtrqa/cli` → GitHub Actions → `rbtr-qa/arbiterqa` / `release.yml`.
-
-## After first publish
-
-```sh
-bun run skills:project -- --confirm-handoff
-```
-
-## Optional later — recover unscoped `npx arbiterqa`
-
-Michael still owns **`arbiterqa@0.2.0`**. Not blocking `@rbtrqa/cli`. File npm support dispute if you want the old one-liner back.
+Or npmjs.com → `@rbtrqa/cli` → Settings → Trusted publisher → GitHub Actions →
+`rbtr-qa/arbiterqa` / `release.yml`. Renaming the workflow file breaks the trust.

@@ -9,11 +9,13 @@ npx @rbtrqa/cli install
 npx @rbtrqa/cli login
 ```
 
-## Maintainer scripts (from `lksy-private`)
+## What lives where
 
-```sh
-./scripts/push-rbtr-qa-arbiterqa-github.sh   # sync this tree → github.com/rbtr-qa/arbiterqa
-./scripts/publish-npm-handoff.sh --publish  # publish @rbtrqa/cli (needs npm auth — see SETUP.md)
-```
+| Path | Owner |
+|------|-------|
+| `bin/`, `package.json`, `README.npm.md`, `.github/workflows/release.yml` | this repo |
+| `skills/arbiterqa/`, `plugins/` | `lksy-private` — synced here, never edited here |
 
-See [SETUP.md](./SETUP.md) for npm/GitHub auth (no manual rsync).
+## Releasing
+
+See [SETUP.md](./SETUP.md).
