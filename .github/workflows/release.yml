@@ -1,5 +1,9 @@
 name: Release npm
 
+# Publishes @rbtrqa/cli with npm trusted publishing (GitHub OIDC). There is no
+# npm token anywhere: npmjs.com trusts this repo + this workflow file, and the
+# publish carries a provenance attestation.
+
 on:
   push:
     tags:
@@ -24,21 +28,26 @@ jobs:
         with:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
-      - name: Use npm with trusted publishing support
+      - name: Use npm with trusted publishing support (>= 11.5.1)
         run: npm install -g npm@11
-      - name: Publish to npm
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Tag matches package.json
+        if: github.event_name == 'push'
         run: |
-          if [ -n "$NODE_AUTH_TOKEN" ]; then
-            echo "Using NPM_TOKEN repository secret (first publish or fallback)."
-          else
-            echo "No NPM_TOKEN — using OIDC trusted publishing (configure on npmjs.com)."
+          VER="$(node -p "require('./package.json').version")"
+          if [ "${GITHUB_REF_NAME}" != "v${VER}" ]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match package.json version ${VER}." >&2
+            exit 1
           fi
+      - name: Publish to npm (trusted publishing)
+        run: |
+          NAME="$(node -p "require('./package.json').name")"
+          VER="$(node -p "require('./package.json').version")"
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
             npm publish --access public --dry-run
-          else
-            npm publish --access public
+            exit 0
           fi
-        # Trusted publishing: npmjs.com → @rbtrqa/cli → GitHub Actions → rbtr-qa/arbiterqa / release.yml
-        # First publish: add repository secret NPM_TOKEN (granular publish token for @rbtrqa), run workflow_dispatch.
+          if npm view "$NAME@$VER" version >/dev/null 2>&1; then
+            echo "$NAME@$VER is already on the registry — skip publish."
+            exit 0
+          fi
+          npm publish --access public
