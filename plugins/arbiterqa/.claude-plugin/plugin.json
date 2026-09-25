@@ -13,7 +13,7 @@
     "api_key": {
       "type": "string",
       "title": "ArbiterQA API key",
-      "description": "From npx arbiterqa login / print-key, or Dashboard → API & agents.",
+      "description": "From npx @rbtrqa/cli login / print-key, or Keys & Connections in the console.",
       "sensitive": true,
       "required": true
     }

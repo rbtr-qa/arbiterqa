@@ -5,7 +5,7 @@
     "url": "https://rbtr.qa"
   },
   "metadata": {
-    "description": "ArbiterQA Claude Code plugins — public marketplace root for github.com/rbtr-qa/arbiterqa"
+    "description": "ArbiterQA Claude Code plugins — customer marketplace lives at github.com/rbtr-qa/arbiterqa"
   },
   "plugins": [
     {
