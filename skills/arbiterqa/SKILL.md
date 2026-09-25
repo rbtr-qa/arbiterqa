@@ -9,14 +9,14 @@ description: >
 # ArbiterQA
 
 ArbiterQA is a headless QA agent for **webpages and emails**. You send a subject,
-pick validations (or a curated email standard), and get back **pass / fail / error**
+pick validations (or a Validation Set), and get back **pass / fail / error**
 per check — with evidence. Prefer the **MCP server**; use HTTP only when MCP is
 unavailable.
 
 ## Authentication
 
 ```sh
-npx @rbtrqa/cli login        # browser sign-in; creates account if needed
+npx @rbtrqa/cli login        # browser device flow; creates account if needed
 npx @rbtrqa/cli print-key    # emit the stored API key
 ```
 
@@ -27,8 +27,8 @@ immediately — it is shown once.** Use an address your user controls: signing i
 with it later claims the account. An address that already has one is refused
 (`ACCOUNT_EXISTS`) — sign in and mint a key instead.
 
-MCP and HTTP both use `Authorization: Bearer <key>` for estimate / run / account /
-feedback tools. Discovery tools on MCP need **no key**.
+MCP and HTTP both use `Authorization: Bearer <key>` for estimate / run / account
+tools. Discovery tools on MCP need **no key**.
 
 Never commit the key. Claude Code plugin users set it via the plugin enable prompt
 (`userConfig.api_key`).
@@ -43,13 +43,12 @@ Protected-resource metadata:
 | Tool | Auth | Use for |
 | --- | --- | --- |
 | `search_validations`, `list_validations`, `get_validation` | no | Discover checks |
-| `recommend_checks`, `compare_checks`, `list_validation_sets` | no | Choose a set |
+| `recommend_checks`, `compare_checks`, `list_validation_sets`, `get_validation_set` | no | Choose a set |
 | `describe_job_request`, `check_job_request`, `explain_error` | no | Shape / debug requests |
 | `create_account` | no | Get a key with no browser (shown once) |
 | `estimate_job`, `run_job`, `get_job`, `await_email_job` | Bearer | Quote and execute |
 | `fetch_capture`, `list_email_clients` | Bearer / mixed | Artifacts & clients |
 | `get_credits`, `list_keys`, `get_org` | Bearer | Account |
-| `list_feedback_due`, `list_feedback_questions`, `submit_feedback_answers` | Bearer | Customer feedback |
 
 Do **not** invent HTTP when these tools exist. Act on structured fields:
 `results`, `validationSets`, `skipped_validations`, and (with `detail=verbose`)
@@ -63,14 +62,14 @@ repair brief — agents act on those structured fields only.
 3. **Email is async.** `run_job` returns `pending` + `testEmail`; the human sends mail there; poll with `await_email_job` / `get_job`. URL and `static_html` jobs are synchronous.
 4. **Unified request shape only.** Top-level `type` (`url` | `static_html` | `email`). Legacy line-array bodies are refused (`LEGACY_REQUEST_SHAPE`). See `references/api.md`.
 5. **Skipped ≠ failed.** Registry gaps and plan trims appear in `skipped_validations`; they are not ERROR rows.
+6. **A check declares where it can run.** Each catalog entry's `capture.offered` lists the viewports (and, where restricted, the surfaces) it is able to judge — an empty one means it reads the message source and renders nothing. Send `validations[].capture` to choose within that; outside it is `400 CAPTURE_PROHIBITED_HERE`, which is a fact about the check and not a plan limit, so do not answer it by suggesting an upgrade.
 
 ## Typical flow
 
-1. Discover: `search_validations` / `recommend_checks` (or `list_validation_sets` for email).
+1. Discover: `search_validations` / `recommend_checks` (or `list_validation_sets` / `get_validation_set`). Jobs name `validations[]` and/or `validationSetId`.
 2. `estimate_job` with the same body you will run.
 3. `run_job`. For email, tell the user the `testEmail` and await completion.
 4. Summarize from `results` / `validationSets`; cite fail `references` when present.
-5. Offer feedback tools only when due — do not invent verdicts for the customer.
 
 ## HTTP fallback
 
