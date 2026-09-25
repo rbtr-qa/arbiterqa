@@ -31,7 +31,7 @@ Needs an npm session with web 2FA (tokens cannot create trust):
 
 ```sh
 npm login --auth-type=web
-npm trust github @rbtrqa/cli --file release.yml --repo rbtr-qa/arbiterqa --allow-publish -y
+npm trust github @rbtrqa/cli --file release.yml --repo rbtr-qa/arbiterqa -y
 npm trust list @rbtrqa/cli
 ```
 
