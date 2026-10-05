@@ -1,10 +1,8 @@
 {
   "mcpServers": {
     "arbiterqa": {
-      "url": "https://api.arbiterqa.com/mcp",
-      "headers": {
-        "Authorization": "Bearer ${user_config.api_key}"
-      }
+      "type": "http",
+      "url": "https://api.arbiterqa.com/mcp/claude"
     }
   }
 }
