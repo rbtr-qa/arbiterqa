@@ -4,7 +4,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "description": "ArbiterQA — agent-native QA for emails and webpages. Installs the ArbiterQA skill (and Cursor MCP entry) and logs you in. Remote MCP: https://api.arbiterqa.com/mcp",
+  "description": "ArbiterQA \u2014 agent-native QA for emails and webpages. Installs the ArbiterQA skill (and Cursor MCP entry) and logs you in. Remote MCP: https://api.arbiterqa.com/mcp",
   "keywords": [
     "qa",
     "validation",
@@ -15,12 +15,20 @@
     "skills",
     "testing",
     "mcp",
-    "model-context-protocol"
+    "model-context-protocol",
+    "arbiterqa",
+    "email-qa",
+    "webpage-qa",
+    "claude-code",
+    "schemafirst"
   ],
   "homepage": "https://www.arbiterqa.com",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rbtr-qa/arbiterqa.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rbtr-qa/arbiterqa/issues"
   },
   "author": "rbtr.qa",
   "license": "MIT",
