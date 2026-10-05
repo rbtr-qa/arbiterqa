@@ -14,11 +14,17 @@ From your project root:
 npx @rbtrqa/cli install
 ```
 
-This detects your coding agent (Claude Code, Cursor, Codex CLI, Gemini CLI —
-or a plain `AGENTS.md`) and installs the ArbiterQA skill: instructions your
+This detects your coding agent (Cursor, Codex CLI, Gemini CLI — or a plain
+`AGENTS.md`) and installs the ArbiterQA skill: instructions your
 agent reads to discover validations, run jobs, and interpret results. When it
 finds Cursor, it also writes a remote **MCP** entry into `.cursor/mcp.json`
-(so the agent can call typed tools without raw HTTP).
+(so the agent can call typed tools without raw HTTP). When it finds Claude Code,
+it prints the two commands that install the ArbiterQA plugin instead:
+
+```text
+/plugin marketplace add rbtr-qa/arbiterqa
+/plugin install arbiterqa@arbiterqa
+```
 
 Then log in (creates your account on first run):
 
@@ -35,7 +41,8 @@ ArbiterQA is also a **remote MCP server**. Agents that speak MCP get typed
 tools instead of assembling HTTP themselves.
 
 ```
-https://api.arbiterqa.com/mcp
+https://api.arbiterqa.com/mcp/claude   # sign in (Claude, Claude Code, any OAuth host)
+https://api.arbiterqa.com/mcp          # API key, or keyless discovery
 ```
 
 Streamable HTTP. Discovery tools (`search_validations`, `get_validation`,
@@ -87,7 +94,6 @@ Options: `--api <url>` / `ARBITER_API_URL` to target a different host,
 
 A single skill folder (instructions + API reference, no code):
 
-- `.claude/skills/arbiterqa/` (Claude Code)
 - `.cursor/skills/arbiterqa/` (Cursor)
 - `.agents/skills/arbiterqa/` (Codex CLI)
 - `.gemini/skills/arbiterqa/` (Gemini CLI)

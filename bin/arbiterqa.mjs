@@ -201,7 +201,7 @@ function gitSays(root, args) {
 /**
  * Write the key where the project's tooling already looks: `ARBITER_API_KEY` in `./.env`.
  *
- * The skill is installed per project (`.claude/skills/…`), so the credential belongs to
+ * The skill is installed per project (`.cursor/skills/…` and friends), so the credential belongs to
  * the project too — and every agent harness and dotenv loader already reads `.env`, so
  * nothing has to be taught where to find it.
  *
@@ -365,8 +365,9 @@ function openBrowser(url) {
 // ── install / update ─────────────────────────────────────────────────────────
 // Harnesses that support directory-based skills get the full skill folder.
 // Anything else (or nothing detected) gets a pointer section in AGENTS.md.
+// Claude Code is not a copy target: it installs the ArbiterQA plugin, which carries the skill
+// and the sign-in MCP server and updates itself (see installClaudeCodePlugin).
 const SKILL_TARGETS = [
-  { dir: '.claude', dest: join('.claude', 'skills', 'arbiterqa'), name: 'Claude Code' },
   { dir: '.cursor', dest: join('.cursor', 'skills', 'arbiterqa'), name: 'Cursor' },
   { dir: '.agents', dest: join('.agents', 'skills', 'arbiterqa'), name: 'Codex CLI' },
   { dir: '.gemini', dest: join('.gemini', 'skills', 'arbiterqa'), name: 'Gemini CLI' },
@@ -426,7 +427,8 @@ function installCursorMcpEntry(cwd) {
   doc.mcpServers[MCP_JSON_MARKER] = {
     url: mcpEndpointUrl(),
     headers: {
-      Authorization: 'Bearer ${ARBITER_API_KEY}',
+      // Cursor interpolates environment variables as ${env:NAME}.
+      Authorization: 'Bearer ${env:ARBITER_API_KEY}',
     },
   };
 
@@ -434,6 +436,28 @@ function installCursorMcpEntry(cwd) {
   writeFileSync(mcpPath, `${JSON.stringify(doc, null, 2)}\n`);
   console.error(`✓ Cursor MCP: .cursor/mcp.json → ${mcpEndpointUrl()}`);
   console.error('  Set ARBITER_API_KEY (npx @rbtrqa/cli print-key) or paste the key into the header.');
+  return true;
+}
+
+const CLAUDE_PLUGIN_COMMANDS = [
+  '/plugin marketplace add rbtr-qa/arbiterqa',
+  '/plugin install arbiterqa@arbiterqa',
+];
+
+/**
+ * Claude Code gets the plugin, not a skill copy. Prints the two commands to run inside Claude
+ * Code, and removes a skill folder an earlier version of this CLI copied, so the plugin's skill
+ * is the only one Claude reads.
+ */
+function installClaudeCodePlugin(cwd) {
+  if (!existsSync(join(cwd, '.claude'))) return false;
+  const legacy = join(cwd, '.claude', 'skills', 'arbiterqa');
+  if (existsSync(legacy)) {
+    rmSync(legacy, { recursive: true, force: true });
+    console.error('✓ Claude Code: removed the old .claude/skills/arbiterqa copy — the plugin carries the skill now');
+  }
+  console.error('→ Claude Code: install the ArbiterQA plugin (skill + MCP, sign-in on first use). In Claude Code run:');
+  for (const cmd of CLAUDE_PLUGIN_COMMANDS) console.error(`    ${cmd}`);
   return true;
 }
 
@@ -453,6 +477,10 @@ function installSkill({ update = false } = {}) {
   }
 
   if (installCursorMcpEntry(cwd)) {
+    installed++;
+  }
+
+  if (installClaudeCodePlugin(cwd)) {
     installed++;
   }
 
