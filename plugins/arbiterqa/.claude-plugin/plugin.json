@@ -1,21 +1,19 @@
 {
   "name": "arbiterqa",
-  "displayName": "ArbiterQA",
-  "version": "1.0.0",
-  "description": "QA webpages and emails with ArbiterQA — MCP tools plus agent skill.",
+  "version": "0.3.0",
+  "description": "QA webpages, HTML and emails with ArbiterQA: a pass, fail or error verdict per check, with evidence. Use when the user asks to QA, validate or audit a URL, landing page, HTML or email before shipping.",
   "author": {
     "name": "ArbiterQA",
     "url": "https://www.arbiterqa.com"
   },
-  "homepage": "https://api.arbiterqa.com/llms.txt",
-  "keywords": ["qa", "email", "webpage", "mcp", "validation"],
-  "userConfig": {
-    "api_key": {
-      "type": "string",
-      "title": "ArbiterQA API key",
-      "description": "From npx @rbtrqa/cli login / print-key, or Keys & Connections in the console.",
-      "sensitive": true,
-      "required": true
-    }
-  }
+  "homepage": "https://www.arbiterqa.com",
+  "repository": "https://github.com/rbtr-qa/arbiterqa",
+  "license": "MIT",
+  "keywords": [
+    "qa",
+    "email",
+    "webpage",
+    "mcp",
+    "validation"
+  ]
 }
