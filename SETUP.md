@@ -4,7 +4,8 @@ Published to npm (org **`rbtrqa`**) from this repo by `.github/workflows/release
 using **npm trusted publishing** — GitHub OIDC, no npm token stored anywhere.
 
 `skills/` and `plugins/` are synced here from upstream; never edit them in this repo.
-`bin/`, `package.json`, the READMEs and the release workflow are edited here.
+`bin/`, `action.yml`, `tests/`, `package.json`, the README and the workflows are edited here
+(`npm test` runs on every pull request).
 
 ## Release
 
@@ -15,6 +16,17 @@ using **npm trusted publishing** — GitHub OIDC, no npm token stored anywhere.
    ```sh
    git tag vx.y.z && git push origin vx.y.z
    ```
+
+   Only exact `vX.Y.Z` tags publish.
+
+3. Move the GitHub Action's major tag to the same commit, so `uses: rbtr-qa/arbiterqa@v1`
+   picks it up. It is a floating tag and never publishes to npm:
+
+   ```sh
+   git tag -f v1 vx.y.z && git push -f origin v1
+   ```
+
+   A breaking change to the action's inputs, outputs or exit codes starts `v2` instead.
 
 `workflow_dispatch` with `dry_run` runs `npm publish --dry-run`.
 
