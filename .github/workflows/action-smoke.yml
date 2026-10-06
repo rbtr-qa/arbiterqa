@@ -1,0 +1,23 @@
+name: Action smoke
+
+# Runs the action from this checkout. With no ARBITER_API_KEY secret (forks, and this repo
+# until one is added) it must skip with a notice and succeed; with one, it runs a real job.
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: jq -n '{type: "url", url: "https://www.arbiterqa.com", validations: [{id: "language-of-page", severity: "required"}]}' > request.json
+      - id: arbiterqa
+        uses: ./
+        with:
+          api-key: ${{ secrets.ARBITER_API_KEY }}
+          request: request.json
+      - run: echo "verdict=${{ steps.arbiterqa.outputs.verdict }}"
