@@ -97,7 +97,8 @@ jobs:
       - name: Write the job request
         env:
           URL: ${{ steps.preview.outputs.url }}
-        run: jq -n --arg url "$URL" '{type: "url", url: $url, validationSetId: "brand-compliance"}' > request.json
+        run: |
+          jq -n --arg url "$URL" '{type: "url", url: $url, validationSetId: "brand-compliance"}' > request.json
       - uses: rbtr-qa/arbiterqa@v1
         with:
           api-key: ${{ secrets.ARBITER_API_KEY }}
@@ -131,7 +132,8 @@ headers and authentication. So your workflow sends it, to the one-time address t
 you:
 
 ```yaml
-- run: jq -n '{type: "email", subject: "Welcome to Acme", validationSetId: "operational"}' > request.json
+- run: |
+    jq -n '{type: "email", subject: "Welcome to Acme", validationSetId: "operational"}' > request.json
 - uses: rbtr-qa/arbiterqa@v1
   with:
     api-key: ${{ secrets.ARBITER_API_KEY }}

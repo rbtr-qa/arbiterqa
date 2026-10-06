@@ -14,7 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: jq -n '{type: "url", url: "https://www.arbiterqa.com", validations: [{id: "language-of-page", severity: "required"}]}' > request.json
+      - run: |
+          jq -n '{type: "url", url: "https://www.arbiterqa.com", validations: [{id: "language-of-page", severity: "required"}]}' > request.json
       - id: arbiterqa
         uses: ./
         with:

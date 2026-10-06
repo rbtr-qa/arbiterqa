@@ -20,3 +20,6 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - run: npm test
+      - name: YAML parses (action, workflows, README examples)
+        if: matrix.node == '22'
+        run: python3 -m pip install --quiet pyyaml && python3 tests/check-yaml.py
