@@ -129,7 +129,9 @@ save credits: the cancelled run's job was already charged and still finishes.
 
 The checks judge the email your stack actually sends, with your ESP's tracking links,
 headers and authentication. So your workflow sends it, to the one-time address the job gives
-you:
+you. Send within about 10 minutes of the job starting, or the capture window closes and the
+job ends `expired` (exit 2, refunded); the `send` input runs right after the start, so this
+holds when you use it:
 
 ```yaml
 - run: |
