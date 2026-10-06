@@ -311,7 +311,9 @@ function progressLine(job, elapsedMs, deadlineMs) {
   const parts = [`${job.status}`, `${s(elapsedMs)} elapsed`, `${s(Math.max(0, deadlineMs - elapsedMs))} left`];
   const cap = job.emailCapture;
   if (cap?.captureStatus) parts.push(`capture ${cap.captureStatus}`);
-  if (cap?.estimatedWaitSeconds != null && cap?.etaObservedAt) {
+  if (cap?.captureStatus === 'searching') parts.push('no email received yet');
+  // The ETA counts from the message's arrival, so it means nothing while still searching.
+  else if (cap?.estimatedWaitSeconds != null && cap?.etaObservedAt) {
     const left = cap.estimatedWaitSeconds - (Date.now() - Date.parse(cap.etaObservedAt)) / 1000;
     if (Number.isFinite(left)) parts.push(`ETA ~${Math.max(0, Math.round(left))}s`);
   }
