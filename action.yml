@@ -1,0 +1,147 @@
+name: ArbiterQA
+description: Gate a pull request on ArbiterQA checks for a webpage, built HTML or an email.
+author: rbtr.qa
+branding:
+  icon: check-circle
+  color: blue
+
+inputs:
+  api-key:
+    description: ArbiterQA API key. Pass a secret (secrets.ARBITER_API_KEY). Empty skips the check with a notice, which is what fork pull requests get.
+    required: false
+    default: ''
+  request:
+    description: Path to the job request, a POST /api/jobs body (type, url / html / email, validationSetId, validations).
+    required: true
+  send:
+    description: Email jobs only. Shell command that sends the email, run after the job starts with ARBITER_TEST_EMAIL and ARBITER_JOB_ID set. If it fails, the step fails before waiting.
+    required: false
+    default: ''
+  fail-on-undecided:
+    description: Fail when there is no verdict (request refused, job expired, wait timed out, service unreachable). Set to false to warn instead.
+    required: false
+    default: 'true'
+  timeout-seconds:
+    description: Stop waiting after this many seconds. The server expires and refunds a pending job at 30 minutes.
+    required: false
+    default: '1920'
+  upload-evidence:
+    description: Upload job.json and screenshots of failed renders as a workflow artifact.
+    required: false
+    default: 'true'
+  artifact-name:
+    description: Name of the evidence artifact. Change it when the action runs more than once in a job.
+    required: false
+    default: arbiterqa-evidence
+  api-url:
+    description: Override the ArbiterQA host (staging). Leave empty for production.
+    required: false
+    default: ''
+
+outputs:
+  verdict:
+    description: pass, blocked or undecided. Empty when skipped or when the send step failed.
+    value: ${{ steps.gate.outputs.verdict }}
+  job-id:
+    description: The job id.
+    value: ${{ steps.gate.outputs.job-id }}
+  job-url:
+    description: The job's page in the ArbiterQA console.
+    value: ${{ steps.gate.outputs.job-url }}
+  test-email:
+    description: Email jobs. The address the email was sent to.
+    value: ${{ steps.gate.outputs.test-email }}
+  credits-charged:
+    description: Credits charged for the job.
+    value: ${{ steps.gate.outputs.credits-charged }}
+  credits-refunded:
+    description: Credits refunded (checks that errored or never ran).
+    value: ${{ steps.gate.outputs.credits-refunded }}
+  blocking-validations:
+    description: Comma-separated ids of the required or prohibited checks that failed.
+    value: ${{ steps.gate.outputs.blocking-validations }}
+
+runs:
+  using: composite
+  steps:
+    - id: guard
+      shell: bash
+      env:
+        ARBITER_API_KEY: ${{ inputs.api-key }}
+      run: |
+        if [ -z "$ARBITER_API_KEY" ]; then
+          echo "::notice title=ArbiterQA skipped::No ArbiterQA API key. Fork pull requests do not receive repository secrets; otherwise add ARBITER_API_KEY as a secret."
+          echo "skip=true" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        echo "::add-mask::$ARBITER_API_KEY"
+        if ! command -v node >/dev/null 2>&1; then
+          echo "::error title=ArbiterQA::Node.js 18.17+ is required on the runner (add actions/setup-node)."
+          exit 1
+        fi
+        echo "skip=false" >> "$GITHUB_OUTPUT"
+
+    - id: gate
+      if: steps.guard.outputs.skip == 'false'
+      shell: bash
+      env:
+        ARBITER_API_KEY: ${{ inputs.api-key }}
+        ARBITER_API_URL: ${{ inputs.api-url }}
+        ARBITER_WAIT_TIMEOUT_SECONDS: ${{ inputs.timeout-seconds }}
+        ARBITER_EVIDENCE_DIR: ${{ runner.temp }}/arbiterqa-evidence
+        ARBITER_NO_BROWSER: '1'
+        REQUEST: ${{ inputs.request }}
+        SEND: ${{ inputs.send }}
+        FAIL_ON_UNDECIDED: ${{ inputs.fail-on-undecided }}
+      run: |
+        set -uo pipefail
+        [ -n "$ARBITER_API_URL" ] || unset ARBITER_API_URL
+        CLI="$GITHUB_ACTION_PATH/bin/arbiterqa.mjs"
+        STARTED="$RUNNER_TEMP/arbiterqa-started.json"
+
+        undecided() {
+          if [ "$FAIL_ON_UNDECIDED" = "true" ]; then
+            echo "::error title=ArbiterQA undecided::$1"
+            exit 1
+          fi
+          echo "::warning title=ArbiterQA undecided::$1"
+          exit 0
+        }
+        field() {
+          node -e 'const j = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")); const v = process.argv[2].split(".").reduce((o, k) => o?.[k], j); process.stdout.write(v == null ? "" : String(v));' "$STARTED" "$1"
+        }
+
+        if ! node "$CLI" start "$REQUEST" > "$STARTED"; then
+          echo "verdict=undecided" >> "$GITHUB_OUTPUT"
+          undecided "The job could not be started. The log above has the error code."
+        fi
+        JOB_ID="$(field jobId)"
+        TEST_EMAIL="$(field emailCapture.testEmail)"
+        [ -n "$TEST_EMAIL" ] || TEST_EMAIL="$(field emailCapture.universalEmail)"
+
+        if [ -n "$SEND" ]; then
+          echo "Sending the email with the send command…"
+          if ! ARBITER_JOB_ID="$JOB_ID" ARBITER_TEST_EMAIL="$TEST_EMAIL" bash -eo pipefail -c "$SEND"; then
+            echo "::error title=ArbiterQA send failed::The send command failed. This is a workflow error, not an ArbiterQA verdict. Job $JOB_ID will expire and its charge is refunded."
+            exit 1
+          fi
+        fi
+
+        # The runner's bash has -e: capture the exit code instead of letting it end the step.
+        rc=0
+        node "$CLI" wait "$JOB_ID" > /dev/null || rc=$?
+        case $rc in
+          0) exit 0 ;;
+          1)
+            echo "::error title=ArbiterQA blocked::Required or prohibited checks failed. See the job summary."
+            exit 1
+            ;;
+          *) undecided "No verdict for job $JOB_ID. See the log and the job summary." ;;
+        esac
+
+    - if: always() && steps.guard.outputs.skip == 'false' && inputs.upload-evidence == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ runner.temp }}/arbiterqa-evidence
+        if-no-files-found: ignore

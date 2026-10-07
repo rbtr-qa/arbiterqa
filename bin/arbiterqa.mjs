@@ -9,6 +9,9 @@
  *   npx @rbtrqa/cli status       Who am I
  *   npx @rbtrqa/cli print-key    Emit the stored API key (composable)
  *   npx @rbtrqa/cli logout       Revoke the key and forget it
+ *   npx @rbtrqa/cli run <file>   Run one job and exit 0 pass / 1 blocked / 2 undecided (CI)
+ *   npx @rbtrqa/cli start <file> Start a job and print it (email: the address to send to)
+ *   npx @rbtrqa/cli wait <jobId> Wait for a job, then exit like `run` (see bin/ci.mjs)
  *   npx @rbtrqa/cli help         This text
  *
  * NO FLAGS, deliberately. Every command does one thing against production. A login
@@ -25,6 +28,8 @@
  *   ARBITER_NO_ENV_FILE  do not touch the project at all — machine store only
  *   ARBITER_CONFIG_DIR   relocate hosts.json (else XDG_CONFIG_HOME/arbiter, else
  *                        ~/.config/arbiter)
+ *   ARBITER_EVIDENCE_DIR wait/run: write job.json and failed-render screenshots here
+ *   ARBITER_WAIT_TIMEOUT_SECONDS  wait/run: give up after this long (default 1920)
  *
  * Maintainers only, undocumented in `help`:
  *   ARBITER_API_URL      point at a non-production deployment
@@ -523,6 +528,13 @@ https://www.arbiterqa.com · MCP https://api.arbiterqa.com/mcp
   npx @rbtrqa/cli print-key    Print the stored API key to stdout
   npx @rbtrqa/cli logout       Revoke the key and forget it
 
+Run a job (CI): the file is a POST /api/jobs body.
+  npx @rbtrqa/cli run request.json   exit 0 pass · 1 required/prohibited failed · 2 no verdict
+  npx @rbtrqa/cli start request.json then send the email, then:
+  npx @rbtrqa/cli wait <jobId>
+  ARBITER_EVIDENCE_DIR=dir           save job.json and failed screenshots
+  ARBITER_WAIT_TIMEOUT_SECONDS=n     stop waiting after n seconds (default 1920)
+
 login writes ARBITER_API_KEY into ./.env and gitignores it. To change that:
   ARBITER_ENV_FILE=path/to/.env    write it somewhere else
   ARBITER_NO_ENV_FILE=1            don't write into the project at all
@@ -609,6 +621,15 @@ if (COMMAND === 'logout') {
     );
   }
   process.exit(revoked ? 0 : 1);
+}
+
+if (COMMAND === 'run' || COMMAND === 'start' || COMMAND === 'wait') {
+  // Same precedence as every other consumer of the key: environment first, then this
+  // machine's stored login for the host.
+  const apiKey = process.env.ARBITER_API_KEY || readHosts()[API_BASE]?.apiKey;
+  const { version } = JSON.parse(readFileSync(join(PKG_ROOT, 'package.json'), 'utf8'));
+  const { runCi } = await import('./ci.mjs');
+  process.exit(await runCi(COMMAND, argv.slice(1), { base: API_BASE, apiKey, version }));
 }
 
 if (COMMAND !== 'login') fail(`Unknown command: ${COMMAND} (try: npx @rbtrqa/cli help)`);
