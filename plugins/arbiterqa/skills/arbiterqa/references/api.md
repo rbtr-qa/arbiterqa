@@ -180,6 +180,26 @@ while pending. An ended job whose capture did not arrive, or whose run stopped, 
 the address. A job with an interruption and no results is `expired`: nothing ran, and the whole
 charge is refunded.
 
+## Run in CI
+
+`npx @rbtrqa/cli run request.json` submits one job (the file is a `POST /api/jobs` body), waits,
+and exits with the verdict. `ARBITER_API_KEY` supplies the key.
+
+| Exit | Verdict | When |
+| --- | --- | --- |
+| `0` | pass | The job ended and `overallPassPolicy` has `blockedByRequired` and `blockedByProhibited` both false |
+| `1` | blocked | Either flag is true; the blockers are `validationSets[].failuresBySeverity.required` / `.prohibited` |
+| `2` | undecided | Refused at the door, `expired`, no `overallPassPolicy`, wait timed out, or the service was unreachable |
+
+`status: "failed"` means some check failed at any severity, an optional one included, so it is
+not on its own a block. For email, `start request.json` returns the job and its
+`emailCapture.testEmail`; send the message from your own stack, then `wait <jobId>`.
+`ARBITER_EVIDENCE_DIR` saves `job.json` and the screenshots of failed renders.
+
+GitHub Actions: `uses: rbtr-qa/arbiterqa@v1` with `api-key` (a secret), `request`, and for
+email `send` (a command run with `ARBITER_TEST_EMAIL` set). Make the job a required status
+check. Documentation: github.com/rbtr-qa/arbiterqa.
+
 ## Report a verdict
 
 ```
