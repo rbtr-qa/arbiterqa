@@ -74,6 +74,9 @@ repair brief — agents act on those structured fields only.
 3. `run_job`, then `await_job` with its `jobId`. For email, tell the user the `testEmail` first.
 4. Summarize from `results` / `validationSets`; cite fail `references` when present.
 
+To gate a pull request or a deploy on the checks, use `npx @rbtrqa/cli run` or the GitHub
+Action `rbtr-qa/arbiterqa@v1`: see "Run in CI" in `references/api.md`.
+
 ## HTTP fallback
 
 Base URL: `https://api.arbiterqa.com`. Full shapes: `references/api.md`.
