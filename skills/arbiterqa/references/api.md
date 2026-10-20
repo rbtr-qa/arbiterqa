@@ -12,7 +12,7 @@ Use this when MCP is unavailable. Prefer MCP tools when the host supports them.
 GET /api/validations
 ```
 
-Public. Use only ids with `runnable: true`, matching `subjectType`. An id with
+Public. Every id listed can run; use one matching `subjectType`. An id with
 `customOnly: true` needs its `custom_only` parameters sent in `parameters` or it is
 skipped; `customParameters` lists every parameter a job may send (a Standard-only one is
 refused as `PARAMETER_NOT_CUSTOMIZABLE`). Catalog dump with parameters:
@@ -77,12 +77,14 @@ Content-Type: application/json
 }
 ```
 
-### Static HTML
+### URL with supplied HTML
+
+`html` is rendered at `url` instead of fetching the page; relative assets resolve against `url`.
 
 ```json
 {
-  "type": "static_html",
-  "baseUrl": "https://www.example.com",
+  "type": "url",
+  "url": "https://www.example.com",
   "html": "<html>…</html>",
   "validations": ["no-lorem-ipsum"]
 }
@@ -171,14 +173,14 @@ GET /api/jobs/:jobId
 Bearer. `POST /api/jobs` answers with the job `pending`, for every subject — the same body this
 returns. Poll `GET /api/jobs/:jobId` until `status` leaves `pending` (a webpage job takes about a
 minute; an email job waits for its message), or use MCP `await_job`. `completedAt` is absent
-while pending. An ended job whose capture did not arrive, or whose run stopped, carries
-`interruption: { cause, message, captureSizeId?, captureClientId?, affectedValidationIds, refund }`;
-`cause` is `email_not_received` | `subject_unreachable` | `gave_up_waiting` |
-`capture_not_started` | `run_deadline` | `render_not_delivered` | `internal`. The checks in
-`affectedValidationIds` are refunded. `subject_unreachable` is the page itself failing to load
-(`message` says why: a timeout, a name that does not resolve, a bad certificate) — fix the page or
-the address. A job with an interruption and no results is `expired`: nothing ran, and the whole
-charge is refunded.
+while pending. A capture a check needed that did not arrive stops the job: it ends `expired` with
+no results, the whole charge is refunded, and it carries
+`interruption: { cause, message, captureSizeId?, captureClientId?, failures, affectedValidationIds, refund }`;
+`failures` lists every capture that did not arrive. `cause` is `email_not_received` |
+`subject_unreachable` | `gave_up_waiting` | `capture_not_started` | `run_deadline` |
+`render_not_delivered` | `render_incomplete` | `internal`. `subject_unreachable` is the page itself
+failing to load (`message` says why: a timeout, a name that does not resolve, a bad certificate) —
+fix the page or the address.
 
 ## Run in CI
 
@@ -236,7 +238,7 @@ the MCP tool `explain_error` called with no arguments. Do not guess codes.
 
 | Code | HTTP | What it means and what to do |
 | --- | --- | --- |
-| `CAPTURE_PROHIBITED_HERE` | 400 | A (viewport, surface) pair in capture is prohibited by the validation's own capture declaration. details.validationId names the validation, details.prohibited lists the refused pairs, and details.reason carries the declaration's recorded rationale. What a validation can be captured in ships with the module and moves only by migration, so this is not a plan limit and no upgrade changes it. GET /api/validations publishes the offered viewports and surfaces per validation. Refused before pricing, so nothing is charged and no job is created. |
+| `CAPTURE_PROHIBITED_HERE` | 400 | A (viewport, surface) pair in capture is prohibited by the validation's own Capture Selection. details.validationId names the validation, details.prohibited lists the refused pairs, and details.reason carries the Capture Selection's recorded rationale. What a validation can be captured in ships with the module and moves only by migration, so this is not a plan limit and no upgrade changes it. GET /api/validations publishes the offered viewports and surfaces per validation. Refused before pricing, so nothing is charged and no job is created. |
 | `CLIENT_SELECTION_NOT_IN_JOB` | 400 | clients was supplied for a validation id that no email line in this job selects. details.validationId names it. Select the validation on the job, or remove its clients entry. Refused before pricing, so nothing is charged and no job is created. |
 | `CLIENT_SELECTION_RENDERLESS_CHECK` | 400 | clients was supplied for a validation that renders nothing: every functional check, and email-images-off-legibility, read the MIME, which is identical across mail clients, so they accept no client selection. details.validationId names it. Remove the clients entry. Refused before pricing, so nothing is charged and no job is created. |
 | `CONFLICTING_PARAMETERS` | 400 | Two validations[] entries set the same parameter name to values that differ. A job carries one flat parameter map, so per-validation values for the same name cannot be expressed. Align the values or drop one. details.path points at the second entry. |
@@ -246,9 +248,9 @@ the MCP tool `explain_error` called with no arguments. Do not guess codes.
 | `INVALID_ENUM_VALUE` | 400 | Use one of the allowed values listed in details.allowedValues. |
 | `INVALID_PARAMETER_VALUE` | 400 | Check the submitted value against the Parameter format requirements returned in details. |
 | `INVALID_REQUEST_BODY` | 400 | Check the request schema, required fields, content type, and JSON formatting. |
-| `JOB_ACCEPTS_ONE_SUBJECT` | 400 | POST /api/jobs and POST /api/jobs/estimate examine one subject per job (one url, one html page or one email); validations may list any number of checks against it. details.subjectCount reports how many subjects were sent. Send one request per subject and each returns its own jobId. Refused before pricing, so nothing is charged and no job is created. |
-| `JOB_SUBJECT_REQUIRED` | 400 | Supply url on a url line, or html and baseUrl on a static_html line; url and baseUrl must be absolute http(s) URLs with a host. details names the line, the field, and the problem (missing \| not_http_url). Refused before pricing, so nothing is charged and no job is created. |
-| `LEGACY_REQUEST_SHAPE` | 400 | The legacy validations line-array body is no longer accepted. Send the unified job request: top-level type ("url" \| "static_html" \| "email") with its subject fields (url, or html + baseUrl, or subject), validations[] as string ids or { id, severity, parameters, clients } objects, and optional validationSetId. details.hint maps each legacy field this body used to its unified home. See the POST /api/jobs reference. |
+| `JOB_ACCEPTS_ONE_SUBJECT` | 400 | POST /api/jobs and POST /api/jobs/estimate examine one subject per job (one webpage or one email); validations may list any number of checks against it. details.subjectCount reports how many subjects were sent. Send one request per subject and each returns its own jobId. Refused before pricing, so nothing is charged and no job is created. |
+| `JOB_SUBJECT_REQUIRED` | 400 | Supply url on a url job; it must be an absolute http(s) URL with a host. html, when sent, must not be empty. details names the line, the field, and the problem (missing \| not_http_url). Refused before pricing, so nothing is charged and no job is created. |
+| `LEGACY_REQUEST_SHAPE` | 400 | The legacy validations line-array body is no longer accepted. Send the unified job request: top-level type ("url" \| "email") with its subject fields (url with optional html, or subject), validations[] as string ids or { id, severity, parameters, clients } objects, and optional validationSetId. details.hint maps each legacy field this body used to its unified home. See the POST /api/jobs reference. |
 | `MISSING_REQUIRED_FIELD` | 400 | Add the missing field listed in details.field and retry. |
 | `NO_VALIDATIONS_SELECTED` | 400 | Add at least one validation id in validations[], or name a validationSetId from GET /api/validation-sets. |
 | `ONE_VALIDATION_SET_PER_JOB` | 400 | Send a single validationSetId string. A subject that needs a different set is a separate job. |
@@ -257,11 +259,11 @@ the MCP tool `explain_error` called with no arguments. Do not guess codes.
 | `SIGNUP_INVALID_EMAIL` | 400 | Provide a syntactically valid email address in the `email` field. It becomes the account owner, so a human must be able to sign in with it later. |
 | `UNKNOWN_EMAIL_CLIENT` | 400 | A client id in clients does not exist in the rbtr render catalog at that form factor. details.validationId names the validation and details.unknownClients lists the (formFactor, clientId) pairs. GET /api/email-clients returns the current catalog. Refused before pricing, so nothing is charged and no job is created. |
 | `UNKNOWN_FIELD` | 400 | Remove or correct the fields in details.unknownFields. The accepted top-level fields are listed in the error message; the most common cause is a typo on a field that matters (e.g. "validation" for "validations"). |
-| `VALIDATION_NOT_RUNNABLE` | 400 | Use an id from GET /api/validations where runnable is true. An id we run but do not list is refused too, so that it can never run unpriced. |
+| `VALIDATION_NOT_OFFERED` | 400 | Use an id from GET /api/validations. |
 | `VALIDATION_SET_CONFLICT` | 400 | Send validationSetId, or an explicit validations[] list, not both with an internal validationSets array. Extra checks belong in validations[]. |
 | `VALIDATION_SET_NOT_FOUND` | 400 | Call GET /api/validation-sets (or GET /api/validation-sets/:setId) for published ids, or name checks in validations[]. |
-| `VALIDATION_SET_SUBJECT_MISMATCH` | 400 | validationSetId must match the job type: url and static_html jobs take url sets; email jobs take email sets. details.setSubjectType and details.jobSubjectType name the mismatch. |
-| `VALIDATION_SUBJECT_MISMATCH` | 400 | Every named validation must match the job type: url/static_html jobs take url-subject checks, email jobs take email-subject checks. details.mismatches names each offender with its subject type. Pick ids from GET /api/validations whose subjectType matches your job. |
+| `VALIDATION_SET_SUBJECT_MISMATCH` | 400 | validationSetId must match the job type: url jobs take url sets; email jobs take email sets. details.setSubjectType and details.jobSubjectType name the mismatch. |
+| `VALIDATION_SUBJECT_MISMATCH` | 400 | Every named validation must match the job type: url jobs take url-subject checks, email jobs take email-subject checks. details.mismatches names each offender with its subject type. Pick ids from GET /api/validations whose subjectType matches your job. |
 | `AUTH_REQUIRED` | 401 | Sign in and retry the request with a valid session. |
 | `INSUFFICIENT_CREDITS` | 402 | The organization does not hold enough credits for this job. Nothing was charged and no job was created. See details.balance, details.required and details.shortfall; quote first with POST /api/jobs/estimate. |
 | `ADMIN_REQUIRED` | 403 | Authenticate as an admin user before calling this endpoint. |
