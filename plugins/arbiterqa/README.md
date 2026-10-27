@@ -1,6 +1,6 @@
 # ArbiterQA plugin for Claude Code
 
-QA webpages, HTML and emails from Claude Code: a pass, fail or error verdict per check, with the
+QA webpages and emails from Claude Code: a pass, fail or error verdict per check, with the
 evidence behind it.
 
 ## Install

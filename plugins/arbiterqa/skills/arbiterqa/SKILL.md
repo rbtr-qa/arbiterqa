@@ -1,9 +1,9 @@
 ---
 name: arbiterqa
 description: >
-  QA webpages, HTML and emails with ArbiterQA: a pass, fail or error verdict per
-  check, with evidence. Use when the user asks to QA, validate or audit a URL,
-  landing page, HTML or email before shipping.
+  QA webpages and emails with ArbiterQA: a pass, fail or error verdict per
+  check, with evidence. Use when the user asks to QA, validate or audit a
+  webpage or email before shipping.
 ---
 
 # ArbiterQA

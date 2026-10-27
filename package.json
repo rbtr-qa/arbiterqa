@@ -1,6 +1,6 @@
 {
   "name": "@rbtrqa/cli",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "publishConfig": {
     "access": "public"
   },
@@ -40,5 +40,5 @@
   "scripts": {
     "test": "node --test"
   },
-  "arbiterqaSkillVersion": "0.5.2"
+  "arbiterqaSkillVersion": "0.5.3"
 }
