@@ -178,7 +178,7 @@ no results, the whole charge is refunded, and it carries
 `interruption: { cause, message, captureSizeId?, captureClientId?, failures, affectedValidationIds, refund }`;
 `failures` lists every capture that did not arrive. `cause` is `email_not_received` |
 `subject_unreachable` | `gave_up_waiting` | `capture_not_started` | `run_deadline` |
-`render_not_delivered` | `render_incomplete` | `internal`. `subject_unreachable` is the page itself
+`render_not_delivered` | `internal`. `subject_unreachable` is the page itself
 failing to load (`message` says why: a timeout, a name that does not resolve, a bad certificate) —
 fix the page or the address.
 

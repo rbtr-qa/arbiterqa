@@ -1,6 +1,6 @@
 {
   "name": "arbiterqa",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "description": "QA webpages and emails with ArbiterQA: a pass, fail or error verdict per check, with evidence. Use when the user asks to QA, validate or audit a webpage or email before shipping.",
   "author": {
     "name": "ArbiterQA",

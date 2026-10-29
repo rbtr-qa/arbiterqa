@@ -12,7 +12,7 @@
       "name": "arbiterqa",
       "source": "./plugins/arbiterqa",
       "description": "QA webpages and emails with ArbiterQA: a pass, fail or error verdict per check, with evidence. Use when the user asks to QA, validate or audit a webpage or email before shipping.",
-      "version": "0.5.3"
+      "version": "0.5.4"
     }
   ]
 }
