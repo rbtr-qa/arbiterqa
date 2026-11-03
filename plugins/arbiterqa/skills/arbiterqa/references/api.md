@@ -168,9 +168,12 @@ GET /api/jobs?detail=verbose
 
 ```
 GET /api/jobs/:jobId
+GET /api/jobs/:jobId/screenshots/:key
+GET /api/jobs/:jobId/subject
 ```
 
-Bearer. `POST /api/jobs` answers with the job `pending`, for every subject — the same body this
+Bearer. Each captured result carries `screenshotUrl` (and `subjectUrl` when the Subject was
+stored): GET it with the same credential. `POST /api/jobs` answers with the job `pending`, for every subject — the same body this
 returns. Poll `GET /api/jobs/:jobId` until `status` leaves `pending` (a webpage job takes about a
 minute; an email job waits for its message), or use MCP `await_job`. `completedAt` is absent
 while pending. A capture a check needed that did not arrive stops the job: it ends `expired` with
@@ -223,7 +226,10 @@ GET /api/keys
 GET /api/org
 ```
 
-Bearer (session or key). Key mint/rotate/revoke stay session-only.
+Bearer (session or key). Key mint/rotate/revoke stay session-only. Every request acts on the
+Organization the credential belongs to; no request names one, and a job body that tries is refused
+as `UNKNOWN_FIELD`. `GET /api/org` (MCP `get_org`) returns `{ orgCode, name, members, … }` —
+`orgCode`, the Organization code, is the one identifier an Organization has in this API.
 
 ## Errors
 
@@ -267,30 +273,28 @@ the MCP tool `explain_error` called with no arguments. Do not guess codes.
 | `AUTH_REQUIRED` | 401 | Sign in and retry the request with a valid session. |
 | `INSUFFICIENT_CREDITS` | 402 | The organization does not hold enough credits for this job. Nothing was charged and no job was created. See details.balance, details.required and details.shortfall; quote first with POST /api/jobs/estimate. |
 | `ADMIN_REQUIRED` | 403 | Authenticate as an admin user before calling this endpoint. |
-| `CUSTOMER_SCOPE_MISMATCH` | 403 | Use the authenticated customer ID, or sign in as the correct customer. |
 | `PLAN_EXCLUDES_EMAIL_CHECKS` | 403 | The organization's plan does not include email checks. details.feature names the plan feature that unlocks them; upgrade the plan in the billing portal and retry. Nothing was charged and no job was created. |
 | `PLAN_EXCLUDES_REQUESTED_CLIENTS` | 403 | An explicitly named (formFactor, clientId) pair in clients is outside the organization's plan grants. Explicit requests are refused, never silently narrowed. details.validationId names the validation, details.refusedClients the pairs, and details.missingFeatures the plan feature(s) that unlock them. Nothing was charged and no job was created. |
 | `PLAN_EXCLUDES_WEBSITE_CHECKS` | 403 | The organization's plan does not include website checks. details.feature names the plan feature that unlocks them; upgrade the plan in the billing portal and retry. Nothing was charged and no job was created. |
 | `UNAUTHORIZED_DOMAIN` | 403 | Sign in with an email address on an invited domain. There is no self-serve allowlist to change: domain restriction is enforced by the identity provider for this deployment, so an unexpected refusal here is a support question. |
-| `UNIVERSAL_CAPTURE_NEEDS_PRIVATE_INBOX` | 403 | emailCapture.mode "universal" selects a message already in the organization's capture inbox by latest / subject / time window. Only paid plans have a private inbox; on Free every organization would share one, so a selector could match another customer's mail. Omit emailCapture (dedicated mode, the default) to get a one-time testEmail for this job, or upgrade the plan. Refused before pricing, so nothing is charged and no job is created. |
+| `UNIVERSAL_CAPTURE_NEEDS_PRIVATE_INBOX` | 403 | emailCapture.mode "universal" selects a message already in the organization's capture inbox by latest / subject / time window. Only paid plans have a private inbox; on Free every organization would share one, so a selector could match another organization's mail. Omit emailCapture (dedicated mode, the default) to get a one-time testEmail for this job, or upgrade the plan. Refused before pricing, so nothing is charged and no job is created. |
 | `CONNECT_REQUEST_EXPIRED` | 404 | Authorization requests live 10 minutes. The client must restart /oauth/authorize. |
 | `CONNECTION_NOT_FOUND` | 404 | GET /api/oauth/connections lists the caller’s live connections. |
-| `CUSTOMER_NOT_FOUND` | 404 | No organization matches that customerId. Omit it to act as the organization your credential belongs to — that is the default, and naming a different tenant is refused as CUSTOMER_SCOPE_MISMATCH rather than answered. |
-| `JOB_NOT_FOUND` | 404 | Verify the jobId and customer scope. |
-| `STORAGE_OBJECT_NOT_FOUND` | 404 | Check customerId, jobId, and storage key. Legacy jobs may use _screenshot. |
+| `JOB_NOT_FOUND` | 404 | Verify the jobId. A job of another Organization is not found. |
+| `STORAGE_OBJECT_NOT_FOUND` | 404 | Check the jobId and storage key against the job's results[].screenshotUrl. |
 | `VALIDATION_NOT_FOUND` | 404 | Use GET /api/validations for offered ids, or a published content slug from /validations/:slug/standard. |
-| `VERDICT_TARGET_NOT_FOUND` | 404 | No validation_results rows match (jobId, validationId) inside the caller's tenant. Verify both ids against GET /api/jobs/:jobId. |
-| `ACCOUNT_EXISTS` | 409 | A tenant already exists for this email address. POST /api/signup only provisions NEW accounts and never returns a credential for an existing one. Sign in at /auth/login and use POST /api/keys, or `npx @rbtrqa/cli login` for a CLI key. |
+| `VERDICT_TARGET_NOT_FOUND` | 404 | No validation_results rows match (jobId, validationId) inside the caller's Organization. Verify both ids against GET /api/jobs/:jobId. |
+| `ACCOUNT_EXISTS` | 409 | An account already exists for this email address. POST /api/signup only provisions NEW accounts and never returns a credential for an existing one. Sign in at /auth/login and use POST /api/keys, or `npx @rbtrqa/cli login` for a CLI key. |
 | `CONNECT_REQUEST_ANSWERED` | 409 | Each authorization request takes exactly one decision. |
-| `JOB_CHARGE_CONFLICT` | 409 | A credit_ledger charge already exists for this job id under a different tenant or a different amount. Job ids are minted server-side and are not accepted in the request body, so this should be unreachable — treat it as an invariant violation and check the logs for billing.charge_conflict. Nothing was charged and no job was created. |
-| `ORG_CANNOT_CONNECT` | 409 | Connections bind only to ordinary customer organizations, never the platform or sign-up organizations. |
+| `JOB_CHARGE_CONFLICT` | 409 | A credit_ledger charge already exists for this job id under a different Organization or a different amount. Job ids are minted server-side and are not accepted in the request body, so this should be unreachable — treat it as an invariant violation and check the logs for billing.charge_conflict. Nothing was charged and no job was created. |
+| `ORG_CANNOT_CONNECT` | 409 | Connections bind only to ordinary Organizations, never the platform or sign-up organizations. |
 | `VERDICT_ALREADY_RECORDED` | 409 | A verdict is immutable once recorded. Repeating the SAME verdict is accepted and updates the note; a different verdict is refused. details.recorded carries the stored verdict. |
 | `INTERNAL_ERROR` | 500 | Retry the request. If it persists, contact support with the requestId. |
 | `JOB_EXECUTION_FAILED` | 500 | The job failed after it was accepted and charged. Settlement refunds undelivered captures and any errored result rows, so a partial run is not billed in full. Retry if retryable is true; otherwise contact support with the requestId and jobId. |
 | `BILLING_NOT_PROVISIONED` | 503 | The organization has no billing customer with our billing provider, or that customer holds no live agreement, so no plan can be resolved and no default is substituted. Nothing on the caller side fixes it: contact support, and the repair happens in our provisioning. |
 | `BILLING_PROVIDER_UNREACHABLE` | 503 | The Kinde Management API or the synced plan catalog could not be read. No plan data is assumed during the outage — every request needing the plan fails until Kinde answers. Check Kinde status, credentials, and network egress; a cached resolution (≤5 min) is still served where one exists. |
 | `EMAIL_CLIENT_CATALOG_UNAVAILABLE` | 503 | The rbtr client catalog is unreachable and nothing is cached, so client ids in clients cannot be validated. Refusing beats skipping: an unvetted id would fail at capture time, after the charge. Retry, or resubmit without per-validation clients. Nothing was charged and no job was created. |
-| `PLAN_NOT_PUBLISHED` | 503 | The customer's Kinde agreement is missing a usable credits entitlement (absent, ≤0, or the 2147483647 unlimited sentinel on a paid plan) or the plan code is not one we grant for. Fix the plan's credits meter in the Kinde dashboard; Free ignores that field and uses FREE_MONTHLY_CREDITS. Requests needing the plan fail until the entitlement is set. |
+| `PLAN_NOT_PUBLISHED` | 503 | The organization's Kinde agreement is missing a usable credits entitlement (absent, ≤0, or the 2147483647 unlimited sentinel on a paid plan) or the plan code is not one we grant for. Fix the plan's credits meter in the Kinde dashboard; Free ignores that field and uses FREE_MONTHLY_CREDITS. Requests needing the plan fail until the entitlement is set. |
 | `SERVICE_UNAVAILABLE` | 503 | A dependency this endpoint requires is unconfigured or unreachable, so the request was refused before any work or billing. This is our deployment, not your request: the body is unchanged and retrying is safe. Call sites override this message with the specific dependency; the request log carries it either way. |
 
 <!-- END GENERATED: error-codes -->

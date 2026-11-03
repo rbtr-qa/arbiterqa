@@ -34,7 +34,7 @@ npx @rbtrqa/cli print-key    # emit the stored API key
 
 **No browser available?** Sign yourself up: MCP `create_account` (public on `/mcp`), or
 `POST /api/signup` with `{ "email": "you@example.com" }` → `{ apiKey, keyId,
-customerId, orgCode, email }`. Same free account a human gets. **Store `apiKey`
+orgCode, email }`. Same free account a human gets. **Store `apiKey`
 immediately — it is shown once.** Use an address your user controls: signing in
 with it later claims the account. An address that already has one is refused
 (`ACCOUNT_EXISTS`) — sign in and mint a key instead.
