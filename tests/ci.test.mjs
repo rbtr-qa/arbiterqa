@@ -82,7 +82,7 @@ test('run: blocked by required → exit 1, blocker listed, only failed screensho
   assert.equal(outputs(r.w.output)['blocking-validations'], 'logo-usage');
   assert.match(r.stderr, /Blocking: logo-usage/);
   assert.deepEqual(readdirSync(r.w.evidence).sort(), ['job.json', 'logo-usage-desktop.png']);
-  const shot = r.seen.find((x) => x.key.startsWith('GET /api/jobs/screenshots/'));
+  const shot = r.seen.find((x) => /^GET \/api\/jobs\/[^/]+\/screenshots\//.test(x.key));
   assert.equal(shot.auth, `Bearer ${KEY}`);
 });
 

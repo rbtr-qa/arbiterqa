@@ -848,19 +848,18 @@ if (!exchangeRes.ok || !exchange.apiKey) {
   fail(`Could not create your API key (${exchangeRes.status}): ${exchange.error ?? 'unknown error'}`);
 }
 
-// Resolve the org's NAME. The exchange returns `orgName` only on deployments that carry
-// that change; against an older one, ask the (read-only) orgs endpoint and match on code,
-// so a person sees "Acme" rather than org_3e1b27100ebcd either way. A nicety, never a
-// failure: any problem here leaves the code showing and the login intact.
-let orgName = exchange.orgName;
-if (!orgName && exchange.orgCode) {
+// Resolve the org's NAME from the (read-only) orgs endpoint, matched on orgCode, so a person
+// sees "Acme" rather than org_3e1b27100ebcd. A nicety, never a failure: any problem here
+// leaves the code showing and the login intact.
+let orgName = null;
+if (exchange.orgCode) {
   try {
     const orgsRes = await fetch(`${API_BASE}/api/device/orgs`, {
       headers: { Authorization: `Bearer ${token.access_token}` },
     });
     if (orgsRes.ok) {
       const listed = await orgsRes.json();
-      orgName = (listed.orgs ?? []).find((o) => o.code === exchange.orgCode)?.name || null;
+      orgName = (listed.orgs ?? []).find((o) => o.orgCode === exchange.orgCode)?.name || null;
     }
   } catch {
     /* the code alone is still correct, just less readable */
@@ -873,7 +872,7 @@ const envPath = SKIP_ENV_FILE
   ? null
   : writeKeyToEnv(exchange.apiKey, {
       email: exchange.email,
-      orgName: exchange.orgName,
+      orgName,
       orgCode: exchange.orgCode,
     });
 const ignored = envPath ? ensureEnvIgnored(envPath) : { state: 'skipped' };
@@ -895,11 +894,11 @@ writeHosts(hosts);
 
 console.error(`\n✓ ${exchange.isNewAccount ? 'Account created' : 'Signed in'} as ${exchange.email}`);
 // Name the organization in words. `org_3e1b27100ebcd` is not something a person can check
-// against what they see in the dashboard, and a key bound to the wrong workspace is the
+// against what they see in the dashboard, and a key bound to the wrong organization is the
 // one failure they cannot diagnose — it reads as "my jobs vanished".
 const orgLabel = orgName
   ? `${orgName}${exchange.orgCode ? ` (${exchange.orgCode})` : ''}`
-  : (exchange.orgCode ?? 'your personal workspace');
+  : (exchange.orgCode ?? 'your personal organization');
 console.error(`✓ Key acts on ${orgLabel}`);
 
 if (!envPath) {

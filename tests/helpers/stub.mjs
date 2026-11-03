@@ -48,9 +48,9 @@ export const blockedByRequired = job({
       validationId: 'logo-usage',
       status: 'fail',
       captureSizeId: 'desktop',
-      screenshotUrl: 'SELF/api/jobs/screenshots/c/job_123/k',
+      screenshotUrl: 'SELF/api/jobs/job_123/screenshots/k',
     },
-    { validationId: 'alt-text', status: 'pass', screenshotUrl: 'SELF/api/jobs/screenshots/c/job_123/k2' },
+    { validationId: 'alt-text', status: 'pass', screenshotUrl: 'SELF/api/jobs/job_123/screenshots/k2' },
   ],
   validationSets: [
     {
@@ -92,7 +92,7 @@ export async function stub(script) {
     req.on('end', () => {
       const key = `${req.method} ${req.url}`;
       seen.push({ key, auth: req.headers.authorization, ua: req.headers['user-agent'], body: raw });
-      const list = script[key] ?? (req.url.startsWith('/api/jobs/screenshots/') ? [{ png: true }] : null);
+      const list = script[key] ?? (/^\/api\/jobs\/[^/]+\/screenshots\//.test(req.url) ? [{ png: true }] : null);
       if (!list) {
         res.writeHead(404, { 'content-type': 'application/json' });
         return res.end(JSON.stringify({ code: 'NOT_FOUND' }));
